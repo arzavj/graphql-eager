@@ -5,13 +5,19 @@ require 'graphql/eager/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "graphql-eager"
-  spec.version       = Graphql::Eager::VERSION
+  spec.version       = GraphQL::Eager::VERSION
   spec.authors       = ["Arzav Jain"]
   spec.email         = ["graphql-eager@googlegroups.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because Rubygems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = <<~SUMMARY
+    An extension to the graphql gem to support eager loading.
+  SUMMARY
+  spec.description   = <<~DESCRIPTION
+    graphql-eager is an extension to the graphql gem to solve the N+1 query problem.
+    It allows the specification of what needs to be eager loaded in order for each field
+    to be computed and then eager-loads only what's necessary given a query.
+  DESCRIPTION
+  spec.homepage      = "https://github.com/arzavj/graphql-eager"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -32,7 +38,7 @@ Gem::Specification.new do |spec|
 
   spec.add_runtime_dependency "graphql", ">= 1.9", "< 2"
 
-  spec.add_development_dependency "bundler", "~> 1.14"
-  spec.add_development_dependency "rake", "~> 10.0"
+  spec.add_development_dependency "bundler", "~> 2.1"
+  spec.add_development_dependency "rake", "~> 12.0"
   spec.add_development_dependency "minitest", "~> 5.0"
 end
