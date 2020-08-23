@@ -5,17 +5,40 @@ class GraphQL::EagerTest < Minitest::Test
     refute_nil ::GraphQL::Eager::VERSION
   end
 
+  DATA = [
+    OpenStruct.new(
+      id: 1,
+      title: "Title 1",
+      comments: [
+        OpenStruct.new(
+          content: "Comment 1",
+          author: OpenStruct.new(id: 1, first_name: "First 1", last_name: "Last 1"),
+        ),
+        OpenStruct.new(
+          content: "Comment 2",
+          author: OpenStruct.new(id: 2, first_name: "First 2", last_name: "Last 2"),
+        ),
+      ],
+    ),
+  ]
+
+  def DATA.find_by_id(id)
+    DATA.find {|b| b.id == id}
+  end
+
   class AuthorType < GraphQL::Schema::Object
+    description "An author"
+
     field :id, ID, null: false
     field :first_name, String, null: false
     field :last_name, String, null: false
   end
 
   class CommentType < GraphQL::Schema::Object
-    description 'A comment'
+    description "A comment"
 
     field :id, ID, null: false
-    field :text, String, null: false
+    field :content, String, null: false
 
     field(
       :author,
@@ -26,7 +49,7 @@ class GraphQL::EagerTest < Minitest::Test
   end
 
   class PostType < GraphQL::Schema::Object
-    description 'A blog post'
+    description "A blog post"
 
     field :id, ID, null: false
     field :title, String, null: false
@@ -35,34 +58,24 @@ class GraphQL::EagerTest < Minitest::Test
       :comments,
       [CommentType],
       null: true,
-      description: 'The comments on this post.',
-      eager: {
-        all_list_entries: (proc do |context|
-          user_id = context[:user_id]
-
-          (proc do |ds|
-            search_terms = {
-              lists_entries__user_id: user_id,
-            }
-            ds.where(search_terms)
-          end)
-        end),
-      },
+      description: "The comments on this post.",
+      eager: {comments: nil},
     )
   end
 
   class QueryType < GraphQL::Schema::Object
-    description 'The query root of this schema'
+    description "The query root of this schema"
 
     # First describe the field signature:
     field :post, PostType, null: true, extras: [:lookahead] do
-      description 'Find a post by ID'
+      description "Find a post by ID"
       argument :id, ID, required: true
     end
 
     # Then provide an implementation:
     def post(id:, lookahead:)
-      puts eager_graph(lookahead)
+      context[:eager_hash] = eager_graph(lookahead)
+      DATA.find_by_id(id)
     end
   end
 
@@ -78,6 +91,7 @@ class GraphQL::EagerTest < Minitest::Test
           title
           comments {
             id
+            content
             author {
               id
               firstName
@@ -87,7 +101,9 @@ class GraphQL::EagerTest < Minitest::Test
         }
       }
     GRAPHQL
-    Schema.execute(query_string, context: {user_id: 1})
-    assert false
+
+    context = {}
+    result = Schema.execute(query_string, context: context)
+    assert_equal({comments: {author: {}}}, context[:eager_hash])
   end
 end

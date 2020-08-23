@@ -17,7 +17,7 @@ module GraphQL
             if proc
               graph[key] = {proc.call(context) => eager_graph(child)}
             else
-              graph[key] = nil
+              graph[key] = eager_graph(child)
             end
           end
         end
