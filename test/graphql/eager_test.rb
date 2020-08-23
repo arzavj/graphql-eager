@@ -8,16 +8,9 @@ class GraphQL::EagerTest < Minitest::Test
   DATA = [
     OpenStruct.new(
       id: 1,
-      title: "Title 1",
       comments: [
-        OpenStruct.new(
-          content: "Comment 1",
-          author: OpenStruct.new(id: 1, first_name: "First 1", last_name: "Last 1"),
-        ),
-        OpenStruct.new(
-          content: "Comment 2",
-          author: OpenStruct.new(id: 2, first_name: "First 2", last_name: "Last 2"),
-        ),
+        OpenStruct.new(id: 1, author: OpenStruct.new(id: 1)),
+        OpenStruct.new(id: 2, author: OpenStruct.new(id: 2)),
       ],
     ),
   ]
@@ -30,15 +23,12 @@ class GraphQL::EagerTest < Minitest::Test
     description "An author"
 
     field :id, ID, null: false
-    field :first_name, String, null: false
-    field :last_name, String, null: false
   end
 
   class CommentType < GraphQL::Schema::Object
     description "A comment"
 
     field :id, ID, null: false
-    field :content, String, null: false
 
     field(
       :author,
@@ -52,7 +42,6 @@ class GraphQL::EagerTest < Minitest::Test
     description "A blog post"
 
     field :id, ID, null: false
-    field :title, String, null: false
 
     field(
       :comments,
@@ -88,14 +77,10 @@ class GraphQL::EagerTest < Minitest::Test
       {
         post(id: 1) {
           id
-          title
           comments {
             id
-            content
             author {
               id
-              firstName
-              lastName
             }
           }
         }
