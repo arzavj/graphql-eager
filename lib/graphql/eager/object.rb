@@ -1,10 +1,10 @@
 module GraphQL
   module Eager
     module Object
-      def eager_graph(node)
-        graph = {}
+      def eager_hash(node)
+        result = {}
         # If current node has no selections, it must be a scalar value
-        return graph if node.selections.empty?
+        return result if node.selections.empty?
 
         field_type = node.selections[0].owner_type
         sub_fields = field_type.fields
@@ -15,14 +15,14 @@ module GraphQL
 
           sub_field.eager.each do |key, proc|
             if proc
-              graph[key] = {proc.call(context) => eager_graph(child)}
+              result[key] = {proc.call(context) => eager_hash(child)}
             else
-              graph[key] = eager_graph(child)
+              result[key] = eager_hash(child)
             end
           end
         end
 
-        graph
+        result
       end
     end
   end

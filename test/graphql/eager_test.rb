@@ -74,7 +74,7 @@ class GraphQL::EagerTest < Minitest::Test
 
     # Then provide an implementation:
     def post(id:, lookahead:)
-      context[:eager_hash] = eager_graph(lookahead)
+      context[:eager_hash] = eager_hash(lookahead)
       DATA.find_by_id(id)
     end
   end
