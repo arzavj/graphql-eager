@@ -72,7 +72,7 @@ class GraphQL::EagerTest < Minitest::Test
     query QueryType
   end
 
-  def test_it_does_something_useful
+  def test_basic
     query_string = <<-GRAPHQL
       {
         post(id: 1) {
@@ -90,5 +90,34 @@ class GraphQL::EagerTest < Minitest::Test
     context = {}
     result = Schema.execute(query_string, context: context)
     assert_equal({comments: {author: {}}}, context[:eager_hash])
+  end
+
+  def test_only_eager_load_requested_fields
+    query_string = <<-GRAPHQL
+      {
+        post(id: 1) {
+          id
+          comments {
+            id
+          }
+        }
+      }
+    GRAPHQL
+
+    context = {}
+    result = Schema.execute(query_string, context: context)
+    assert_equal({comments: {}}, context[:eager_hash])
+
+    query_string = <<-GRAPHQL
+      {
+        post(id: 1) {
+          id
+        }
+      }
+    GRAPHQL
+
+    context = {}
+    result = Schema.execute(query_string, context: context)
+    assert_equal({}, context[:eager_hash])
   end
 end
