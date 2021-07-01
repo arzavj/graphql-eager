@@ -19,10 +19,17 @@ class GraphQL::EagerTest < Minitest::Test
     DATA.find {|b| b.id == id}
   end
 
-  class AuthorType < GraphQL::Schema::Object
-    description "An author"
+  class PersonType < GraphQL::Schema::Object
+    description "A person"
 
     field :id, ID, null: false
+  end
+
+  class UpvoteType < GraphQL::Schema::Object
+    description "An upvote"
+
+    field :id, ID, null: false
+    field :upvoter, PersonType, null: false, eager: :upvoter
   end
 
   class CommentType < GraphQL::Schema::Object
@@ -32,9 +39,32 @@ class GraphQL::EagerTest < Minitest::Test
 
     field(
       :author,
-      AuthorType,
+      PersonType,
       null: false,
       eager: {author: nil},
+    )
+
+    field(
+      :upvotes,
+      [UpvoteType],
+      null: false,
+      eager: {
+        upvote: {
+          upvoter: (proc do |context|
+            user_id = context[:user_id]
+            (proc do |ds|
+              ds.where(user_id: user_id)
+            end)
+          end)
+        },
+      },
+    )
+
+    field(
+      :num_upvotes,
+      Integer,
+      null: false,
+      eager: :upvotes,
     )
   end
 
@@ -49,6 +79,13 @@ class GraphQL::EagerTest < Minitest::Test
       null: true,
       description: "The comments on this post.",
       eager: {comments: nil},
+    )
+
+    field(
+      :total_upvotes,
+      Integer,
+      null: false,
+      eager: {comments: :upvotes}
     )
   end
 
@@ -72,6 +109,12 @@ class GraphQL::EagerTest < Minitest::Test
     query QueryType
   end
 
+  def assert_eager_hash(query_string, expected_eager_hash)
+    context = {}
+    Schema.execute(query_string, context: context)
+    assert_equal expected_eager_hash, context[:eager_hash]
+  end
+
   def test_basic
     query_string = <<-GRAPHQL
       {
@@ -87,9 +130,7 @@ class GraphQL::EagerTest < Minitest::Test
       }
     GRAPHQL
 
-    context = {}
-    result = Schema.execute(query_string, context: context)
-    assert_equal({comments: {author: {}}}, context[:eager_hash])
+    assert_eager_hash(query_string, {comments: {author: nil}})
   end
 
   def test_only_eager_load_requested_fields
@@ -104,9 +145,7 @@ class GraphQL::EagerTest < Minitest::Test
       }
     GRAPHQL
 
-    context = {}
-    result = Schema.execute(query_string, context: context)
-    assert_equal({comments: {}}, context[:eager_hash])
+    assert_eager_hash(query_string, {comments: {}})
 
     query_string = <<-GRAPHQL
       {
@@ -116,8 +155,8 @@ class GraphQL::EagerTest < Minitest::Test
       }
     GRAPHQL
 
-    context = {}
-    result = Schema.execute(query_string, context: context)
-    assert_equal({}, context[:eager_hash])
+    assert_eager_hash(query_string, {})
   end
+
+  def test_
 end

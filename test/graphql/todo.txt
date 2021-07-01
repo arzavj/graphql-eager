@@ -1,0 +1,8 @@
+test camel case stuff by adding a field like listEntries
+instead of using camelize, see if there's a method on child.field
+eager hash validation 
+
+write tests with all different possibilities for eager hash
+eager for scalar fields is valid
+just eager: :author
+eager: {comments: {author: {...}}}
